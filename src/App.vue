@@ -157,17 +157,24 @@ function updateChart() {
           coordinateSystem: 'geo3D',
           data: flagData.map(d => ({
             name: d.name,
-            value: d.value,
+            value: [d.value[0], d.value[1], 1], // [lng, lat, altitude]
             flag: d.flag,
           })),
           symbol: 'circle',
-          symbolSize: 1.5,
+          symbolSize: 8,
           label: {
             show: true,
             position: 'top',
-            formatter: (params) => params.data.flag,
+            formatter: (params) => params.data.flag || '',
             fontSize: 18,
-            distance: 0,
+            distance: 5,
+            textStyle: {
+              color: '#ffffff',
+              fontSize: 18,
+              borderWidth: 1,
+              borderColor: '#000',
+              backgroundColor: 'transparent',
+            },
           },
           itemStyle: {
             color: '#f472b6',
