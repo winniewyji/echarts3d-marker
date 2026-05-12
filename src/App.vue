@@ -37,7 +37,7 @@ const viewMode = ref('3d')
 const showLines = ref(true)
 const autoRotate = ref(true)
 
-// 8个国家国旗数据（位置调整到和参考图一致）
+// 8个国家国旗数据
 const flagData = [
   { name: '中国', value: [104.0, 35.0], flag: '🇨🇳', rank: 1 },
   { name: '美国', value: [-98.5, 39.8], flag: '🇺🇸', rank: 2 },
@@ -57,15 +57,15 @@ const marketShare = [
   { name: 'Others', value: 19.5, color: '#94a3b8' },
 ]
 
-// 连接线数据（从中国出发连接到其他国家）
+// 连接线数据
 const connectLines = [
-  { from: [104.0, 35.0], to: [-98.5, 39.8] },   // 中国→美国
-  { from: [104.0, 35.0], to: [55.0, 62.0] },    // 中国→俄罗斯
-  { from: [104.0, 35.0], to: [138.0, 36.0] },   // 中国→日本
-  { from: [104.0, 35.0], to: [127.0, 37.0] },   // 中国→韩国
-  { from: [104.0, 35.0], to: [-1.0, 52.0] },    // 中国→英国
-  { from: [104.0, 35.0], to: [2.0, 47.0] },     // 中国→法国
-  { from: [104.0, 35.0], to: [10.0, 51.0] },    // 中国→德国
+  { from: [104.0, 35.0], to: [-98.5, 39.8] },
+  { from: [104.0, 35.0], to: [55.0, 62.0] },
+  { from: [104.0, 35.0], to: [138.0, 36.0] },
+  { from: [104.0, 35.0], to: [127.0, 37.0] },
+  { from: [104.0, 35.0], to: [-1.0, 52.0] },
+  { from: [104.0, 35.0], to: [2.0, 47.0] },
+  { from: [104.0, 35.0], to: [10.0, 51.0] },
 ]
 
 function initChart() {
@@ -84,9 +84,8 @@ function updateChart() {
   const is3D = viewMode.value === '3d'
 
   const option = {
-    backgroundColor: '#0a0a1a',
+    backgroundColor: 'transparent',
     
-    // ========== 3D地图层 ==========
     geo: {
       map: 'world',
       roam: true,
@@ -106,7 +105,6 @@ function updateChart() {
         }
       },
       label: { show: false },
-      // 3D透视投影
       viewControl: {
         projection: 'perspective',
         autoRotate: autoRotate.value,
@@ -120,7 +118,6 @@ function updateChart() {
         animation: true,
         animationDurationUpdate: 1000,
       },
-      // 3D光照
       light: is3D ? {
         main: {
           intensity: 1.5,
@@ -154,9 +151,7 @@ function updateChart() {
       }
     },
 
-    // ========== 国旗+飞线层 ==========
     series: [
-      // 国旗散点
       {
         name: '国旗',
         type: 'scatter',
@@ -193,8 +188,6 @@ function updateChart() {
         },
         zlevel: 2,
       },
-
-      // 飞线（带动画点）
       ...(showLines.value ? [{
         name: '航线',
         type: 'lines',
@@ -225,35 +218,23 @@ function updateChart() {
 function updateBarChart() {
   const option = {
     backgroundColor: 'transparent',
-    title: {
-      text: 'AI模型市场份额',
-      left: 'center',
-      top: 10,
-      textStyle: {
+    
+    // 3D柱状图
+    xAxis3D: {
+      type: 'category',
+      data: marketShare.map(d => d.name),
+      axisLine: { show: false },
+      axisTick: { show: false },
+      axisLabel: {
         color: '#e2e8f0',
-        fontSize: 14,
-        fontWeight: 600,
+        fontSize: 11,
+      },
+      nameTextStyle: {
+        color: '#94a3b8',
+        fontSize: 10,
       },
     },
-    tooltip: {
-      trigger: 'axis',
-      axisPointer: { type: 'shadow' },
-      backgroundColor: 'rgba(15, 23, 42, 0.95)',
-      borderColor: '#38bdf8',
-      textStyle: { color: '#fff' },
-      formatter: (params) => {
-        const item = params[0]
-        return `${item.name}<br/>份额: <b>${item.value}%</b>`
-      },
-    },
-    grid: {
-      left: '15%',
-      right: '10%',
-      top: 50,
-      bottom: 20,
-      containLabel: false,
-    },
-    xAxis: {
+    yAxis3D: {
       type: 'value',
       max: 40,
       axisLine: { show: false },
@@ -262,47 +243,109 @@ function updateBarChart() {
         color: '#94a3b8',
         formatter: '{value}%',
       },
-      splitLine: {
-        lineStyle: {
-          color: '#1e3a5f',
-          type: 'dashed',
-        },
-      },
+      nameTextStyle: { color: '#94a3b8' },
     },
-    yAxis: {
-      type: 'category',
-      data: marketShare.map(d => d.name),
+    zAxis3D: {
+      type: 'value',
       axisLine: { show: false },
       axisTick: { show: false },
-      axisLabel: {
-        color: '#e2e8f0',
-        fontSize: 12,
+      axisLabel: { show: false },
+      nameTextStyle: { color: '#94a3b8' },
+    },
+
+    tooltip: {
+      trigger: 'item',
+      backgroundColor: 'rgba(15, 23, 42, 0.95)',
+      borderColor: '#38bdf8',
+      borderWidth: 1,
+      textStyle: { color: '#fff' },
+      formatter: (params) => {
+        return `<b>${params.name}</b><br/>市场份额: <b>${params.value}%</b>`
       },
     },
+
+    grid3D: {
+      show: true,
+      boxWidth: 60,
+      boxDepth: 40,
+      boxHeight: 50,
+      viewControl: {
+        projection: 'perspective',
+        autoRotate: false,
+        distance: 120,
+        alpha: 40,
+        beta: 20,
+        center: [0, 0, 0],
+      },
+      light: {
+        main: {
+          intensity: 1.5,
+          shadow: true,
+          shadowQuality: 'ultra',
+          alpha: 50,
+          beta: 40,
+        },
+        ambient: {
+          intensity: 0.4,
+        },
+        ambientCubemap: {
+          enable: true,
+          exposure: 0.8,
+          diffuseIntensity: 0.5,
+        }
+      },
+      material: {
+        roughness: 0.4,
+        metalness: 0.1,
+      },
+      axisPointer: {
+        show: false,
+      },
+      axisLine: {
+        lineStyle: {
+          color: '#1e3a5f',
+          width: 1,
+        }
+      },
+      splitLine: {
+        show: false,
+      },
+    },
+
     series: [
       {
-        type: 'bar',
+        type: 'bar3D',
         data: marketShare.map(d => ({
           value: d.value,
           itemStyle: {
             color: d.color,
-            borderRadius: [0, 4, 4, 0],
+            opacity: 0.9,
           },
         })),
-        barWidth: 16,
+        shading: 'realistic',
+        barWidth: 10,
+        barHeight: 10,
+        barDepth: 10,
         label: {
           show: true,
-          position: 'right',
-          formatter: '{c}%',
-          color: '#e2e8f0',
+          position: 'top',
+          formatter: (params) => `${params.value}%`,
+          color: '#fff',
           fontSize: 12,
+          textShadowColor: '#000',
+          textShadowBlur: 3,
         },
         emphasis: {
           itemStyle: {
-            shadowBlur: 10,
+            opacity: 1,
+            shadowBlur: 20,
             shadowColor: 'rgba(56, 189, 248, 0.5)',
           }
         },
+        itemStyle: {
+          opacity: 0.85,
+        },
+        animationDurationUpdate: 1500,
       },
     ],
   }
@@ -370,7 +413,7 @@ body {
 }
 
 .chart-section {
-  background: #0a0a1a;
+  background: rgba(10, 10, 26, 0.8);
   border-radius: 16px;
   border: 1px solid #1e3a5f;
   overflow: hidden;
