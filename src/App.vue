@@ -1,8 +1,8 @@
 <template>
   <div id="app">
     <div class="header">
-      <h1>🗺️ ECharts 3D 地图 + 标记点</h1>
-      <p>通过两层地图叠加解决 3D 模式下无法打点的问题</p>
+      <h1>🌍 ECharts 3D 世界地图 + 国旗标记</h1>
+      <p>通过两层地图叠加解决 3D 模式下无法打点的问题，支持国旗 emoji 标记</p>
     </div>
 
     <div class="solution-box">
@@ -10,6 +10,7 @@
       <p>
         ECharts GL 的 3D 地图 <code>map3D</code> 系列无法直接添加标记点。
         解决思路：<strong>底层 3D 地图</strong> + <strong>顶层 2D 散点图</strong> 叠加显示。
+        国旗使用 emoji + symbol 实现可视化效果。
       </p>
     </div>
 
@@ -20,7 +21,7 @@
     <div class="controls">
       <button class="btn" :class="{ active: viewMode === '3d' }" @click="setViewMode('3d')">🌍 3D 模式</button>
       <button class="btn" :class="{ active: viewMode === '2d' }" @click="setViewMode('2d')">🗺️ 2D 模式</button>
-      <button class="btn" @click="toggleMarkers">📍 切换标记点</button>
+      <button class="btn" @click="toggleMarkers">🚩 切换国旗</button>
     </div>
   </div>
 </template>
@@ -29,35 +30,37 @@
 import { ref, onMounted, onUnmounted } from 'vue'
 import * as echarts from 'echarts'
 import 'echarts-gl'
-import chinaJson from './china.json'
+import worldJson from './world.json'
 
 const chartRef = ref(null)
 let chart = null
 const viewMode = ref('3d')
 const markersVisible = ref(true)
 
-// 标记点数据（城市经纬度）
-const markerData = [
-  { name: '北京', value: [116.46, 39.92, 100] },
-  { name: '上海', value: [121.48, 31.22, 100] },
-  { name: '广州', value: [113.23, 23.16, 100] },
-  { name: '深圳', value: [114.07, 22.62, 100] },
-  { name: '杭州', value: [120.19, 30.26, 100] },
-  { name: '成都', value: [104.06, 30.67, 100] },
-  { name: '武汉', value: [114.31, 30.52, 100] },
-  { name: '西安', value: [108.95, 34.27, 100] },
-  { name: '南京', value: [118.78, 32.04, 100] },
-  { name: '重庆', value: [106.55, 29.56, 100] },
+// 国旗标记点数据（国家中心点经纬度）
+const flagData = [
+  { name: '中国', value: [104.0, 35.0], flag: '🇨🇳' },
+  { name: '美国', value: [-98.5, 39.8], flag: '🇺🇸' },
+  { name: '日本', value: [138.0, 36.0], flag: '🇯🇵' },
+  { name: '德国', value: [10.0, 51.0], flag: '🇩🇪' },
+  { name: '法国', value: [2.0, 47.0], flag: '🇫🇷' },
+  { name: '英国', value: [-1.0, 52.0], flag: '🇬🇧' },
+  { name: '韩国', value: [127.0, 37.0], flag: '🇰🇷' },
+  { name: '印度', value: [78.0, 22.0], flag: '🇮🇳' },
+  { name: '俄罗斯', value: [55.0, 62.0], flag: '🇷🇺' },
+  { name: '巴西', value: [-52.0, -14.0], flag: '🇧🇷' },
+  { name: '澳大利亚', value: [133.0, -27.0], flag: '🇦🇺' },
+  { name: '加拿大', value: [-106.0, 56.0], flag: '🇨🇦' },
+  { name: '意大利', value: [12.0, 42.0], flag: '🇮🇹' },
+  { name: '西班牙', value: [-4.0, 40.0], flag: '🇪🇸' },
+  { name: '墨西哥', value: [-102.0, 23.0], flag: '🇲🇽' },
+  { name: '阿根廷', value: [-64.0, -34.0], flag: '🇦🇷' },
 ]
 
 function initChart() {
-  // 注册中国地图
-  echarts.registerMap('china', chinaJson)
-
+  echarts.registerMap('world', worldJson)
   chart = echarts.init(chartRef.value)
-
   updateChart()
-
   window.addEventListener('resize', () => chart?.resize())
 }
 
@@ -69,45 +72,42 @@ function updateChart() {
     tooltip: {
       trigger: 'item',
       formatter: (params) => {
-        if (params.seriesType === 'scatter') {
-          return `${params.data.name}<br/>经度: ${params.data.value[0]}<br/>纬度: ${params.data.value[1]}`
+        if (params.seriesType === 'scatter' && params.data.flag) {
+          return `${params.data.flag} ${params.data.name}`
         }
         return params.name
       }
     },
 
-    // ========== 底层：地图 ==========
+    // ========== 底层：世界地图 ==========
     geo: {
-      map: 'china',
+      map: 'world',
       roam: true,
-      scaleLimit: { min: 0.8, max: 3 },
+      scaleLimit: { min: 0.8, max: 5 },
       itemStyle: {
         areaColor: '#1d4ed8',
         borderColor: '#38bdf8',
-        borderWidth: 1,
+        borderWidth: 0.5,
       },
       emphasis: {
         itemStyle: {
           areaColor: '#2563eb',
         }
       },
-      // 2D 地图的透视效果（3D 感）
       viewControl: is3D ? {
         projection: 'perspective',
         autoRotate: false,
-        distance: 80,
-        alpha: 40,
-        beta: 15,
+        distance: 100,
+        alpha: 30,
+        beta: 10,
         center: [0, 0, 0],
         animation: true,
         animationDurationUpdate: 1000,
       } : {
-        // 2D 视角
         alpha: 0,
         beta: 0,
         center: [0, 0],
       },
-      // 2D 模式下关闭阴影增强扁平感
       light: is3D ? {
         main: {
           intensity: 1.2,
@@ -120,60 +120,65 @@ function updateChart() {
       } : undefined,
     },
 
-    // ========== 顶层：标记点 ==========
+    // ========== 顶层：国旗标记 ==========
     series: markersVisible.value ? [
+      // 国旗标记点
       {
-        name: '标记点',
+        name: '国旗',
         type: 'scatter',
         coordinateSystem: 'geo',
-        data: markerData,
-        symbolSize: (val) => val[2] / 10,
+        data: flagData.map(d => ({
+          name: d.name,
+          value: d.value,
+          flag: d.flag,
+        })),
+        symbol: 'circle',
+        symbolSize: 14,
         label: {
           show: true,
           position: 'top',
-          formatter: '{b}',
-          color: '#fff',
-          fontSize: 11,
+          formatter: (params) => params.data.flag,
+          fontSize: 18,
+          textShadowColor: 'rgba(0,0,0,0.8)',
+          textShadowBlur: 4,
         },
         itemStyle: {
-          color: '#f472b6',
-          shadowBlur: 10,
-          shadowColor: '#f472b6',
+          color: 'rgba(255,255,255,0.1)',
+          shadowBlur: 0,
         },
         emphasis: {
           scale: 1.5,
           itemStyle: {
-            color: '#ec4899',
             shadowBlur: 20,
-            shadowColor: '#ec4899',
+            shadowColor: '#f472b6',
           }
         },
-        // 标记点动画
         zlevel: 2,
       },
-      // 额外：飞线动画效果
+      // 飞线效果
       {
         name: '飞线',
         type: 'lines',
         coordinateSystem: 'geo',
         data: [
-          { from: [116.46, 39.92], to: [121.48, 31.22] },  // 北京→上海
-          { from: [121.48, 31.22], to: [113.23, 23.16] },  // 上海→广州
-          { from: [113.23, 23.16], to: [114.07, 22.62] },  // 广州→深圳
-          { from: [104.06, 30.67], to: [108.95, 34.27] },  // 成都→西安
+          { from: [-98.5, 39.8], to: [104.0, 35.0] },   // 美国→中国
+          { from: [104.0, 35.0], to: [138.0, 36.0] },    // 中国→日本
+          { from: [10.0, 51.0], to: [2.0, 47.0] },       // 德国→法国
+          { from: [-1.0, 52.0], to: [127.0, 37.0] },     // 英国→韩国
+          { from: [78.0, 22.0], to: [55.0, 62.0] },     // 印度→俄罗斯
         ],
         lineStyle: {
           color: '#38bdf8',
-          width: 2,
+          width: 1.5,
           curveness: 0.2,
         },
         effect: {
           show: true,
-          period: 2,
-          trailLength: 0.4,
+          period: 4,
+          trailLength: 0.3,
           color: '#38bdf8',
           symbol: 'circle',
-          symbolSize: 3,
+          symbolSize: 2,
         },
         zlevel: 3,
       }
