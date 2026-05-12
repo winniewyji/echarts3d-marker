@@ -37,7 +37,6 @@ const viewMode = ref('3d')
 const showLines = ref(true)
 const autoRotate = ref(true)
 
-// 8个国家国旗数据
 const flagData = [
   { name: '中国', value: [104.0, 35.0], flag: '🇨🇳', rank: 1 },
   { name: '美国', value: [-98.5, 39.8], flag: '🇺🇸', rank: 2 },
@@ -49,7 +48,6 @@ const flagData = [
   { name: '德国', value: [10.0, 51.0], flag: '🇩🇪', rank: 8 },
 ]
 
-// AI模型市场份额数据
 const marketShare = [
   { name: 'MiniMax', value: 34.2, color: '#38bdf8' },
   { name: 'OpenAI', value: 27.8, color: '#10b981' },
@@ -57,7 +55,6 @@ const marketShare = [
   { name: 'Others', value: 19.5, color: '#94a3b8' },
 ]
 
-// 连接线数据
 const connectLines = [
   { from: [104.0, 35.0], to: [-98.5, 39.8] },
   { from: [104.0, 35.0], to: [55.0, 62.0] },
@@ -70,8 +67,8 @@ const connectLines = [
 
 function initChart() {
   echarts.registerMap('world', worldJson)
-  chart = echarts.init(chartRef.value, null, { renderer: 'canvas' })
-  barChart = echarts.init(barChartRef.value, null, { renderer: 'canvas' })
+  chart = echarts.init(chartRef.value)
+  barChart = echarts.init(barChartRef.value)
   updateChart()
   updateBarChart()
   window.addEventListener('resize', () => {
@@ -83,127 +80,241 @@ function initChart() {
 function updateChart() {
   const is3D = viewMode.value === '3d'
 
-  const option = {
-    backgroundColor: '#0a0a1a',
-    
-    geo: {
-      map: 'world',
-      roam: true,
-      scaleLimit: { min: 0.8, max: 8 },
-      itemStyle: {
-        areaColor: '#1a365d',
-        borderColor: '#4299e1',
-        borderWidth: 0.5,
-      },
-      emphasis: {
-        itemStyle: {
-          areaColor: '#2c5282',
-          borderColor: '#63b3ed',
-        }
-      },
-      label: { show: false },
-      viewControl: {
-        projection: 'perspective',
-        autoRotate: autoRotate.value,
-        autoRotateSpeed: 0.5,
-        distance: is3D ? 110 : 200,
-        alpha: is3D ? 40 : 0,
-        beta: is3D ? 10 : 0,
+  if (is3D) {
+    // ========== 真正的 3D 地球模式 ==========
+    const option = {
+      backgroundColor: '#0a0a1a',
+      
+      // 真正的 3D 地球组件
+      geo3D: {
+        map: 'world',
+        roam: true,
         center: [0, 0],
-        minDistance: 30,
-        maxDistance: 400,
-        animation: true,
-        animationDurationUpdate: 1000,
-      },
-      light: is3D ? {
-        main: {
-          intensity: 1.2,
-          shadow: false,
-          alpha: 50,
-          beta: 30,
-        },
-        ambient: {
-          intensity: 0.6,
-        }
-      } : undefined,
-    },
-
-    tooltip: {
-      trigger: 'item',
-      backgroundColor: 'rgba(15, 23, 42, 0.95)',
-      borderColor: '#38bdf8',
-      textStyle: { color: '#fff' },
-      formatter: (params) => {
-        if (params.data?.flag) {
-          return `<div style="font-size:24px">${params.data.flag}</div><b>${params.data.name}</b><br/>AI市场份额第${params.data.rank}位`
-        }
-        return params.name || ''
-      }
-    },
-
-    series: [
-      {
-        name: '国旗',
-        type: 'scatter',
-        coordinateSystem: 'geo',
-        data: flagData.map(d => ({
-          name: d.name,
-          value: d.value,
-          flag: d.flag,
-          rank: d.rank,
-        })),
-        symbol: 'circle',
-        symbolSize: 14,
-        label: {
-          show: true,
-          position: 'top',
-          formatter: (params) => params.data.flag,
-          fontSize: 18,
-          color: '#fff',
-          textShadowColor: '#000',
-          textShadowBlur: 4,
-        },
         itemStyle: {
-          color: 'rgba(251, 191, 36, 0.8)',
-          shadowBlur: 15,
-          shadowColor: 'rgba(251, 191, 36, 0.5)',
+          color: '#1a365d',
+          opacity: 1,
+          borderColor: '#4299e1',
+          borderWidth: 0.5,
         },
         emphasis: {
-          scale: 2.5,
+          itemStyle: {
+            color: '#2c5282',
+          }
         },
-        zlevel: 2,
+        label: {
+          show: false,
+        },
+        realisticMaterial: {
+          roughness: 0.6,
+          metalness: 0.1,
+        },
+        viewControl: {
+          distance: 120,
+          autoRotate: autoRotate.value,
+          autoRotateSpeed: 0.8,
+          alpha: 40,
+          beta: 10,
+          minDistance: 50,
+          maxDistance: 250,
+          animation: true,
+          animationDurationUpdate: 1000,
+        },
+        light: {
+          main: {
+            intensity: 1.5,
+            shadow: false,
+            alpha: 50,
+            beta: 30,
+          },
+          ambient: {
+            intensity: 0.4,
+          },
+          ambientCubemap: {
+            enable: false,
+          }
+        },
+        postEffect: {
+          enable: true,
+          bloom: {
+            enable: true,
+            intensity: 0.05,
+          },
+          SSAO: {
+            enable: true,
+            radius: 1,
+            intensity: 0.5,
+          },
+        },
+        temporalSuperSampling: {
+          enable: false,
+        },
       },
-      ...(showLines.value ? [{
-        name: '航线',
-        type: 'lines',
-        coordinateSystem: 'geo',
-        data: connectLines,
-        lineStyle: {
-          color: '#38bdf8',
-          width: 1.5,
-          opacity: 0.7,
-          curveness: 0.2,
-        },
-        effect: {
-          show: true,
-          period: 3,
-          trailLength: 0.5,
-          color: '#38bdf8',
-          symbol: 'circle',
-          symbolSize: 3,
-        },
-        zlevel: 3,
-      }] : []),
-    ],
-  }
 
-  chart.setOption(option, true)
+      tooltip: {
+        trigger: 'item',
+        backgroundColor: 'rgba(15, 23, 42, 0.95)',
+        borderColor: '#38bdf8',
+        textStyle: { color: '#fff' },
+        formatter: (params) => {
+          if (params.data?.flag) {
+            return `<div style="font-size:24px">${params.data.flag}</div><b>${params.data.name}</b><br/>AI市场份额第${params.data.rank}位`
+          }
+          return params.name || ''
+        }
+      },
+
+      series: [
+        // 3D 散点（国旗）
+        {
+          name: '国旗',
+          type: 'scatter3D',
+          coordinateSystem: 'geo3D',
+          data: flagData.map(d => ({
+            name: d.name,
+            value: [d.value[0], d.value[1], 2],
+            flag: d.flag,
+            rank: d.rank,
+          })),
+          symbol: 'circle',
+          symbolSize: 1.5,
+          label: {
+            show: true,
+            position: 'top',
+            formatter: (params) => params.data.flag,
+            fontSize: 16,
+            distance: 5,
+            textStyle: {
+              color: '#fff',
+              fontSize: 16,
+              backgroundColor: 'transparent',
+            },
+          },
+          itemStyle: {
+            color: '#fbbf24',
+            opacity: 1,
+          },
+          emphasis: {
+            scale: 2,
+          },
+          zlevel: 2,
+        },
+        // 3D 飞线
+        ...(showLines.value ? [{
+          name: '航线',
+          type: 'lines3D',
+          coordinateSystem: 'geo3D',
+          data: connectLines.map(line => ({
+            coords: [line.from, line.to],
+          })),
+          lineStyle: {
+            color: '#38bdf8',
+            width: 1.5,
+            opacity: 0.7,
+            curveness: 0.2,
+          },
+          effect: {
+            show: true,
+            period: 3,
+            trailLength: 0.5,
+            color: '#38bdf8',
+            symbol: 'circle',
+            symbolSize: 3,
+          },
+          zlevel: 3,
+        }] : []),
+      ],
+    }
+    chart.setOption(option, true)
+  } else {
+    // ========== 2D 地图模式 ==========
+    const option = {
+      backgroundColor: '#0a0a1a',
+      geo: {
+        map: 'world',
+        roam: true,
+        scaleLimit: { min: 0.8, max: 8 },
+        itemStyle: {
+          areaColor: '#1a365d',
+          borderColor: '#4299e1',
+          borderWidth: 0.5,
+        },
+        emphasis: {
+          itemStyle: {
+            areaColor: '#2c5282',
+            borderColor: '#63b3ed',
+          }
+        },
+        label: { show: false },
+      },
+      tooltip: {
+        trigger: 'item',
+        backgroundColor: 'rgba(15, 23, 42, 0.95)',
+        borderColor: '#38bdf8',
+        textStyle: { color: '#fff' },
+        formatter: (params) => {
+          if (params.data?.flag) {
+            return `<div style="font-size:24px">${params.data.flag}</div><b>${params.data.name}</b>`
+          }
+          return params.name || ''
+        }
+      },
+      series: [
+        {
+          name: '国旗',
+          type: 'scatter',
+          coordinateSystem: 'geo',
+          data: flagData.map(d => ({
+            name: d.name,
+            value: d.value,
+            flag: d.flag,
+            rank: d.rank,
+          })),
+          symbol: 'circle',
+          symbolSize: 14,
+          label: {
+            show: true,
+            position: 'top',
+            formatter: (params) => params.data.flag,
+            fontSize: 18,
+            color: '#fff',
+            textShadowColor: '#000',
+            textShadowBlur: 4,
+          },
+          itemStyle: {
+            color: 'rgba(251, 191, 36, 0.8)',
+          },
+          zlevel: 2,
+        },
+        ...(showLines.value ? [{
+          name: '航线',
+          type: 'lines',
+          coordinateSystem: 'geo',
+          data: connectLines,
+          lineStyle: {
+            color: '#38bdf8',
+            width: 1.5,
+            opacity: 0.7,
+            curveness: 0.2,
+          },
+          effect: {
+            show: true,
+            period: 3,
+            trailLength: 0.5,
+            color: '#38bdf8',
+            symbol: 'circle',
+            symbolSize: 3,
+          },
+          zlevel: 3,
+        }] : []),
+      ],
+    }
+    chart.setOption(option, true)
+  }
 }
 
 function updateBarChart() {
   const option = {
     backgroundColor: 'transparent',
-    
     xAxis3D: {
       type: 'category',
       data: marketShare.map(d => d.name),
@@ -228,7 +339,6 @@ function updateBarChart() {
       axisTick: { show: false },
       axisLabel: { show: false },
     },
-
     tooltip: {
       trigger: 'item',
       backgroundColor: 'rgba(15, 23, 42, 0.95)',
@@ -236,7 +346,6 @@ function updateBarChart() {
       textStyle: { color: '#fff' },
       formatter: (params) => `<b>${params.name}</b><br/>市场份额: <b>${params.value}%</b>`,
     },
-
     grid3D: {
       boxWidth: 50,
       boxDepth: 40,
@@ -268,7 +377,6 @@ function updateBarChart() {
       axisLine: { lineStyle: { color: '#1e3a5f' } },
       splitLine: { show: false },
     },
-
     series: [
       {
         type: 'bar3D',
@@ -301,7 +409,6 @@ function updateBarChart() {
       },
     ],
   }
-
   barChart.setOption(option, true)
 }
 
