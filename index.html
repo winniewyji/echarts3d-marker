@@ -3,47 +3,14 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>ECharts 3D 地图标记点解决方案</title>
+    <title>ECharts 3D 世界地图 + 国旗标记</title>
     <style>
       * { margin: 0; padding: 0; box-sizing: border-box; }
       body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #0f172a; color: #fff; min-height: 100vh; }
-      #app { padding: 20px; }
-      .header { text-align: center; margin-bottom: 30px; }
-      .header h1 { font-size: 1.8rem; font-weight: 600; margin-bottom: 8px; }
-      .header p { color: #94a3b8; font-size: 0.95rem; }
-      .solution-box { background: linear-gradient(135deg, #1e293b, #334155); border-radius: 12px; padding: 20px; margin-bottom: 30px; border: 1px solid #475569; }
-      .solution-box h2 { color: #38bdf8; font-size: 1.1rem; margin-bottom: 12px; }
-      .solution-box code { background: #0f172a; padding: 2px 8px; border-radius: 4px; font-size: 0.85rem; color: #f472b6; }
-      .chart-container { background: #1e293b; border-radius: 12px; overflow: hidden; border: 1px solid #334155; }
-      #chart { width: 100%; height: 600px; }
-      .controls { display: flex; gap: 12px; margin-top: 20px; justify-content: center; flex-wrap: wrap; }
-      .btn { padding: 10px 24px; background: #3b82f6; color: #fff; border: none; border-radius: 8px; cursor: pointer; font-size: 0.95rem; transition: all 0.2s; }
-      .btn:hover { background: #2563eb; transform: translateY(-1px); }
-      .btn.active { background: #10b981; }
     </style>
   </head>
   <body>
-    <div id="app">
-      <div class="header">
-        <h1>🗺️ ECharts 3D 地图 + 标记点</h1>
-        <p>通过两层地图叠加解决 3D 模式下无法打点的问题</p>
-      </div>
-      <div class="solution-box">
-        <h2>💡 解决方案</h2>
-        <p>
-          ECharts GL 的 3D 地图 <code>map3D</code> 系列无法直接添加标记点。<br/>
-          解决思路：<strong>底层 3D 地图</strong> + <strong>顶层 2D 散点图</strong> 叠加显示。
-        </p>
-      </div>
-      <div class="chart-container">
-        <div id="chart"></div>
-      </div>
-      <div class="controls">
-        <button class="btn active" onclick="setViewMode('3d')">🌍 3D 模式</button>
-        <button class="btn" onclick="setViewMode('2d')">🗺️ 2D 模式</button>
-        <button class="btn" onclick="toggleMarkers()">📍 切换标记点</button>
-      </div>
-    </div>
+    <div id="app"></div>
     <script type="module" src="/src/main.js"></script>
   </body>
 </html>

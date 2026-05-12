@@ -2,15 +2,14 @@
   <div id="app">
     <div class="header">
       <h1>🌍 ECharts 3D 世界地图 + 国旗标记</h1>
-      <p>通过两层地图叠加解决 3D 模式下无法打点的问题，支持国旗 emoji 标记</p>
+      <p>通过 geo3D 实现真实的 3D 地球效果，支持国旗 emoji 标记</p>
     </div>
 
     <div class="solution-box">
       <h2>💡 解决方案</h2>
       <p>
-        ECharts GL 的 3D 地图 <code>map3D</code> 系列无法直接添加标记点。
-        解决思路：<strong>底层 3D 地图</strong> + <strong>顶层 2D 散点图</strong> 叠加显示。
-        国旗使用 emoji + symbol 实现可视化效果。
+        使用 ECharts GL 的 <code>geo3D</code> 组件实现真正的 3D 地球效果。<br/>
+        国旗通过 <code>scatter3D</code> 系列添加到 3D 地图上方。
       </p>
     </div>
 
@@ -67,125 +66,210 @@ function initChart() {
 function updateChart() {
   const is3D = viewMode.value === '3d'
 
-  const option = {
-    backgroundColor: 'transparent',
-    tooltip: {
-      trigger: 'item',
-      formatter: (params) => {
-        if (params.seriesType === 'scatter' && params.data.flag) {
-          return `${params.data.flag} ${params.data.name}`
+  if (is3D) {
+    // ========== 3D 模式：使用 geo3D ==========
+    const option = {
+      backgroundColor: '#0f172a',
+      tooltip: {
+        trigger: 'item',
+        formatter: (params) => {
+          if (params.seriesType === 'scatter3D' && params.data.flag) {
+            return `${params.data.flag} ${params.data.name}`
+          }
+          return params.name
         }
-        return params.name
-      }
-    },
+      },
 
-    // ========== 底层：世界地图 ==========
-    geo: {
-      map: 'world',
-      roam: true,
-      scaleLimit: { min: 0.8, max: 5 },
-      itemStyle: {
-        areaColor: '#1d4ed8',
-        borderColor: '#38bdf8',
-        borderWidth: 0.5,
-      },
-      emphasis: {
-        itemStyle: {
-          areaColor: '#2563eb',
-        }
-      },
-      viewControl: is3D ? {
-        projection: 'perspective',
-        autoRotate: false,
-        distance: 100,
-        alpha: 30,
-        beta: 10,
-        center: [0, 0, 0],
-        animation: true,
-        animationDurationUpdate: 1000,
-      } : {
-        alpha: 0,
-        beta: 0,
-        center: [0, 0],
-      },
-      light: is3D ? {
-        main: {
-          intensity: 1.2,
-          shadow: true,
-          shadowQuality: 'high',
-        },
-        ambient: {
-          intensity: 0.4,
-        }
-      } : undefined,
-    },
-
-    // ========== 顶层：国旗标记 ==========
-    series: markersVisible.value ? [
-      // 国旗标记点
-      {
-        name: '国旗',
-        type: 'scatter',
-        coordinateSystem: 'geo',
-        data: flagData.map(d => ({
-          name: d.name,
-          value: d.value,
-          flag: d.flag,
-        })),
-        symbol: 'circle',
-        symbolSize: 14,
-        label: {
-          show: true,
-          position: 'top',
-          formatter: (params) => params.data.flag,
-          fontSize: 18,
-          textShadowColor: 'rgba(0,0,0,0.8)',
-          textShadowBlur: 4,
-        },
-        itemStyle: {
-          color: 'rgba(255,255,255,0.1)',
-          shadowBlur: 0,
+      // geo3D 组件 - 真正的 3D 地球
+      geo3D: {
+        map: 'world',
+        roam: true,
+        realisticMaterial: {
+          roughness: 0.6,
+          metalness: 0.1,
         },
         emphasis: {
-          scale: 1.5,
           itemStyle: {
-            shadowBlur: 20,
-            shadowColor: '#f472b6',
+            color: '#2563eb',
           }
         },
-        zlevel: 2,
+        itemStyle: {
+          color: '#1e3a8a',        // 深蓝色底色
+          borderColor: '#38bdf8', // 亮蓝色边框
+          borderWidth: 0.5,
+          shininess: 20,
+          opacity: 0.9,
+        },
+        light: {
+          main: {
+            intensity: 1.5,
+            shadow: true,
+            shadowQuality: 'high',
+            alpha: 40,
+            beta: 30,
+          },
+          ambient: {
+            intensity: 0.4,
+          },
+          ambientCubemap: {
+            exposure: 1,
+            diffuseIntensity: 0.5,
+          }
+        },
+        viewControl: {
+          projection: 'perspective',
+          autoRotate: true,
+          autoRotateSpeed: 0.5,
+          distance: 120,
+          alpha: 40,
+          beta: 10,
+          center: [0, 0, 0],
+          minDistance: 50,
+          maxDistance: 300,
+          animation: true,
+          animationDurationUpdate: 1000,
+        },
+        groundPlane: {
+          show: false,
+        },
+        postEffect: {
+          enable: true,
+          bloom: {
+            enable: true,
+            intensity: 0.1,
+          },
+          SSAO: {
+            enable: true,
+            radius: 2,
+            intensity: 1,
+          },
+        },
+        temporalSuperSampling: {
+          enable: true,
+        },
       },
-      // 飞线效果
-      {
-        name: '飞线',
-        type: 'lines',
-        coordinateSystem: 'geo',
-        data: [
-          { from: [-98.5, 39.8], to: [104.0, 35.0] },   // 美国→中国
-          { from: [104.0, 35.0], to: [138.0, 36.0] },    // 中国→日本
-          { from: [10.0, 51.0], to: [2.0, 47.0] },       // 德国→法国
-          { from: [-1.0, 52.0], to: [127.0, 37.0] },     // 英国→韩国
-          { from: [78.0, 22.0], to: [55.0, 62.0] },     // 印度→俄罗斯
-        ],
-        lineStyle: {
-          color: '#38bdf8',
-          width: 1.5,
-          curveness: 0.2,
-        },
-        effect: {
-          show: true,
-          period: 4,
-          trailLength: 0.3,
-          color: '#38bdf8',
-          symbol: 'circle',
-          symbolSize: 2,
-        },
-        zlevel: 3,
-      }
-    ] : [],
-  }
 
-  chart.setOption(option, true)
+      // 3D 散点标记
+      series: markersVisible.value ? [
+        {
+          name: '国旗',
+          type: 'scatter3D',
+          coordinateSystem: 'geo3D',
+          data: flagData.map(d => ({
+            name: d.name,
+            value: d.value,
+            flag: d.flag,
+          })),
+          symbol: 'circle',
+          symbolSize: 1.5,
+          label: {
+            show: true,
+            position: 'top',
+            formatter: (params) => params.data.flag,
+            fontSize: 18,
+            distance: 0,
+          },
+          itemStyle: {
+            color: '#f472b6',
+            opacity: 1,
+          },
+          emphasis: {
+            scale: 2,
+          },
+        },
+      ] : [],
+    }
+
+    chart.setOption(option, true)
+  } else {
+    // ========== 2D 模式：使用普通 geo ==========
+    const option = {
+      backgroundColor: '#0f172a',
+      tooltip: {
+        trigger: 'item',
+        formatter: (params) => {
+          if (params.seriesType === 'scatter' && params.data.flag) {
+            return `${params.data.flag} ${params.data.name}`
+          }
+          return params.name
+        }
+      },
+
+      // 普通 2D 地图
+      geo: {
+        map: 'world',
+        roam: true,
+        scaleLimit: { min: 0.8, max: 5 },
+        itemStyle: {
+          areaColor: '#1e3a8a',
+          borderColor: '#38bdf8',
+          borderWidth: 0.5,
+        },
+        emphasis: {
+          itemStyle: {
+            areaColor: '#2563eb',
+          }
+        },
+        label: {
+          show: false,
+        },
+      },
+
+      // 2D 散点标记
+      series: markersVisible.value ? [
+        {
+          name: '国旗',
+          type: 'scatter',
+          coordinateSystem: 'geo',
+          data: flagData.map(d => ({
+            name: d.name,
+            value: d.value,
+            flag: d.flag,
+          })),
+          symbol: 'circle',
+          symbolSize: 14,
+          label: {
+            show: true,
+            position: 'top',
+            formatter: (params) => params.data.flag,
+            fontSize: 18,
+          },
+          itemStyle: {
+            color: 'rgba(255,255,255,0.1)',
+          },
+          emphasis: {
+            scale: 1.5,
+          },
+        },
+        // 飞线
+        {
+          name: '飞线',
+          type: 'lines',
+          coordinateSystem: 'geo',
+          data: [
+            { from: [-98.5, 39.8], to: [104.0, 35.0] },
+            { from: [104.0, 35.0], to: [138.0, 36.0] },
+            { from: [10.0, 51.0], to: [2.0, 47.0] },
+          ],
+          lineStyle: {
+            color: '#38bdf8',
+            width: 1.5,
+            curveness: 0.2,
+          },
+          effect: {
+            show: true,
+            period: 4,
+            trailLength: 0.3,
+            color: '#38bdf8',
+            symbol: 'circle',
+            symbolSize: 2,
+          },
+        },
+      ] : [],
+    }
+
+    chart.setOption(option, true)
+  }
 }
 
 function setViewMode(mode) {
@@ -248,7 +332,7 @@ onUnmounted(() => {
   color: #f472b6;
 }
 .chart-container {
-  background: #1e293b;
+  background: #0f172a;
   border-radius: 12px;
   overflow: hidden;
   border: 1px solid #334155;
