@@ -2,7 +2,7 @@
   <div id="app">
     <div class="header">
       <h1>🗺️ 广州市3D地图</h1>
-      <p>广州各区分布标记</p>
+      <p>各区摄像头分布监控</p>
     </div>
 
     <div class="chart-container">
@@ -12,7 +12,7 @@
     <div class="controls">
       <button class="btn" :class="{ active: viewMode === '3d' }" @click="setViewMode('3d')">🌍 3D地形</button>
       <button class="btn" :class="{ active: viewMode === '2d' }" @click="setViewMode('2d')">🗺️ 2D平面</button>
-      <button class="btn" :class="{ active: autoRotate }" @click="autoRotate = !autoRotate; updateMap()">🔄 {{ autoRotate ? '停止旋转' : '自动旋转' }}</button>
+      <button class="btn" @click="clearSelection">❌ 清除选择</button>
     </div>
   </div>
 </template>
@@ -26,32 +26,49 @@ import guangzhouJson from './guangzhou.json'
 const chartRef = ref(null)
 let chart = null
 const viewMode = ref('3d')
-const autoRotate = ref(true)
 
-// 广州各区数据
+// 广州各区数据（含摄像头数量）
 const districtData = [
-  { name: '天河区', value: [113.361, 23.125], color: '#3b82f6' },
-  { name: '越秀区', value: [113.268, 23.129], color: '#10b981' },
-  { name: '海珠区', value: [113.318, 23.083], color: '#ef4444' },
-  { name: '荔湾区', value: [113.244, 23.112], color: '#f59e0b' },
-  { name: '白云区', value: [113.262, 23.168], color: '#8b5cf6' },
-  { name: '番禺区', value: [113.364, 22.938], color: '#ec4899' },
-  { name: '黄埔区', value: [113.457, 23.177], color: '#06b6d4' },
-  { name: '花都区', value: [113.211, 23.392], color: '#14b8a6' },
-  { name: '南沙区', value: [113.517, 22.801], color: '#22c55e' },
-  { name: '增城区', value: [113.810, 23.302], color: '#a855f7' },
-  { name: '从化区', value: [113.587, 23.546], color: '#84cc16' },
+  { name: '天河区', value: [113.361, 23.125], cameras: 1258, color: '#3b82f6' },
+  { name: '越秀区', value: [113.268, 23.129], cameras: 982, color: '#10b981' },
+  { name: '海珠区', value: [113.318, 23.083], cameras: 876, color: '#ef4444' },
+  { name: '荔湾区', value: [113.244, 23.112], cameras: 654, color: '#f59e0b' },
+  { name: '白云区', value: [113.262, 23.168], cameras: 1102, color: '#8b5cf6' },
+  { name: '番禺区', value: [113.364, 22.938], cameras: 945, color: '#ec4899' },
+  { name: '黄埔区', value: [113.457, 23.177], cameras: 834, color: '#06b6d4' },
+  { name: '花都区', value: [113.211, 23.392], cameras: 567, color: '#14b8a6' },
+  { name: '南沙区', value: [113.517, 22.801], cameras: 423, color: '#22c55e' },
+  { name: '增城区', value: [113.810, 23.302], cameras: 389, color: '#a855f7' },
+  { name: '从化区', value: [113.587, 23.546], cameras: 312, color: '#84cc16' },
 ]
+
+// 选中的区域
+const selectedDistrict = ref(null)
 
 function initChart() {
   echarts.registerMap('guangzhou', guangzhouJson)
   chart = echarts.init(chartRef.value)
   updateMap()
+  
+  // 点击事件
+  chart.on('click', (params) => {
+    if (params.name) {
+      selectedDistrict.value = params.name
+      updateMap()
+    }
+  })
+  
   window.addEventListener('resize', () => chart?.resize())
 }
 
 function updateMap() {
   const is3D = viewMode.value === '3d'
+  
+  // 根据选中状态决定旗帜颜色
+  const getFlagColor = (name) => {
+    if (selectedDistrict.value === name) return '#3b82f6' // 蓝色
+    return '#ef4444' // 红色
+  }
 
   if (is3D) {
     const option = {
@@ -100,10 +117,10 @@ function updateMap() {
           name: d.name,
           itemStyle: {
             color: d.color,
-            opacity: 0.6,
+            opacity: selectedDistrict.value === d.name ? 0.9 : 0.6,
             borderColor: d.color,
-            borderWidth: 2,
-            shadowBlur: 10,
+            borderWidth: selectedDistrict.value === d.name ? 3 : 2,
+            shadowBlur: selectedDistrict.value === d.name ? 15 : 10,
             shadowColor: d.color,
           },
         })),
@@ -116,7 +133,7 @@ function updateMap() {
         viewControl: {
           projection: 'perspective',
           distance: 80,
-          autoRotate: autoRotate.value,
+          autoRotate: false,
           autoRotateSpeed: 0.8,
           alpha: 45,
           beta: 15,
@@ -163,9 +180,52 @@ function updateMap() {
         trigger: 'item',
         backgroundColor: 'rgba(15, 23, 42, 0.95)',
         borderColor: '#38bdf8',
+        borderWidth: 1,
         textStyle: { color: '#fff' },
-        formatter: (params) => `<b>${params.name}</b>`,
+        formatter: (params) => {
+          const district = districtData.find(d => d.name === params.name)
+          if (district) {
+            return `<div style="font-size:14px"><b>${params.name}</b></div>
+                    <div style="color:#fbbf24">📷 摄像头数量: <b>${district.cameras}</b> 个</div>`
+          }
+          return `<b>${params.name}</b>`
+        }
       },
+
+      series: [
+        // 旗帜标记
+        {
+          name: '旗帜',
+          type: 'scatter3D',
+          coordinateSystem: 'geo3D',
+          data: districtData.map(d => ({
+            name: d.name,
+            value: [d.value[0], d.value[1], 2],
+            cameras: d.cameras,
+            itemStyle: {
+              color: getFlagColor(d.name),
+            },
+          })),
+          symbol: 'path://M12 2L12 22M8 6L12 2L16 6', // 旗帜路径
+          symbolSize: 12,
+          symbolKeepAspect: true,
+          label: {
+            show: true,
+            position: 'top',
+            formatter: (params) => '🚩',
+            fontSize: 14,
+            distance: 8,
+            textStyle: {
+              color: getFlagColor(params.data.name),
+              fontSize: 16,
+            },
+          },
+          emphasis: {
+            scale: 1.5,
+          },
+          zlevel: 3,
+        },
+      ],
     }
     chart.setOption(option, true)
   } else {
@@ -204,9 +264,50 @@ function updateMap() {
         trigger: 'item',
         backgroundColor: 'rgba(15, 23, 42, 0.95)',
         borderColor: '#38bdf8',
+        borderWidth: 1,
         textStyle: { color: '#fff' },
-        formatter: (params) => `<b>${params.name}</b>`,
+        formatter: (params) => {
+          const district = districtData.find(d => d.name === params.name)
+          if (district) {
+            return `<div style="font-size:14px"><b>${params.name}</b></div>
+                    <div style="color:#fbbf24">📷 摄像头数量: <b>${district.cameras}</b> 个</div>`
+          }
+          return `<b>${params.name}</b>`
+        }
       },
+      series: [
+        // 旗帜标记
+        {
+          name: '旗帜',
+          type: 'scatter',
+          coordinateSystem: 'geo',
+          data: districtData.map(d => ({
+            name: d.name,
+            value: d.value,
+            cameras: d.cameras,
+            itemStyle: {
+              color: getFlagColor(d.name),
+              shadowBlur: 10,
+              shadowColor: getFlagColor(d.name),
+            },
+          })),
+          symbol: 'path://M12 2L12 22M8 6L12 2L16 6',
+          symbolSize: 15,
+          symbolKeepAspect: true,
+          label: {
+            show: true,
+            position: 'top',
+            formatter: (params) => '🚩',
+            fontSize: 16,
+            distance: 8,
+            color: getFlagColor(params.data.name),
+          },
+          emphasis: {
+            scale: 1.5,
+          },
+          zlevel: 3,
+        },
+      ],
     }
     chart.setOption(option, true)
   }
@@ -214,6 +315,11 @@ function updateMap() {
 
 function setViewMode(mode) {
   viewMode.value = mode
+  updateMap()
+}
+
+function clearSelection() {
+  selectedDistrict.value = null
   updateMap()
 }
 
