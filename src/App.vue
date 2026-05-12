@@ -70,8 +70,8 @@ const connectLines = [
 
 function initChart() {
   echarts.registerMap('world', worldJson)
-  chart = echarts.init(chartRef.value)
-  barChart = echarts.init(barChartRef.value)
+  chart = echarts.init(chartRef.value, null, { renderer: 'canvas' })
+  barChart = echarts.init(barChartRef.value, null, { renderer: 'canvas' })
   updateChart()
   updateBarChart()
   window.addEventListener('resize', () => {
@@ -84,7 +84,7 @@ function updateChart() {
   const is3D = viewMode.value === '3d'
 
   const option = {
-    backgroundColor: 'transparent',
+    backgroundColor: '#0a0a1a',
     
     geo: {
       map: 'world',
@@ -94,14 +94,11 @@ function updateChart() {
         areaColor: '#1a365d',
         borderColor: '#4299e1',
         borderWidth: 0.5,
-        shadowColor: 'rgba(66, 153, 225, 0.5)',
-        shadowBlur: 15,
       },
       emphasis: {
         itemStyle: {
           areaColor: '#2c5282',
           borderColor: '#63b3ed',
-          borderWidth: 1,
         }
       },
       label: { show: false },
@@ -109,10 +106,10 @@ function updateChart() {
         projection: 'perspective',
         autoRotate: autoRotate.value,
         autoRotateSpeed: 0.5,
-        distance: is3D ? 100 : 180,
-        alpha: is3D ? 45 : 0,
-        beta: is3D ? 15 : 0,
-        center: [0, 0, 0],
+        distance: is3D ? 110 : 200,
+        alpha: is3D ? 40 : 0,
+        beta: is3D ? 10 : 0,
+        center: [0, 0],
         minDistance: 30,
         maxDistance: 400,
         animation: true,
@@ -120,19 +117,13 @@ function updateChart() {
       },
       light: is3D ? {
         main: {
-          intensity: 1.5,
-          shadow: true,
-          shadowQuality: 'ultra',
-          alpha: 60,
-          beta: 40,
+          intensity: 1.2,
+          shadow: false,
+          alpha: 50,
+          beta: 30,
         },
         ambient: {
-          intensity: 0.5,
-        },
-        ambientCubemap: {
-          enable: true,
-          exposure: 0.6,
-          diffuseIntensity: 0.4,
+          intensity: 0.6,
         }
       } : undefined,
     },
@@ -141,7 +132,6 @@ function updateChart() {
       trigger: 'item',
       backgroundColor: 'rgba(15, 23, 42, 0.95)',
       borderColor: '#38bdf8',
-      borderWidth: 1,
       textStyle: { color: '#fff' },
       formatter: (params) => {
         if (params.data?.flag) {
@@ -174,17 +164,12 @@ function updateChart() {
           textShadowBlur: 4,
         },
         itemStyle: {
-          color: 'rgba(251, 191, 36, 0.7)',
-          shadowBlur: 20,
+          color: 'rgba(251, 191, 36, 0.8)',
+          shadowBlur: 15,
           shadowColor: 'rgba(251, 191, 36, 0.5)',
         },
         emphasis: {
           scale: 2.5,
-          itemStyle: {
-            color: '#fbbf24',
-            shadowBlur: 30,
-            shadowColor: 'rgba(251, 191, 36, 0.8)',
-          }
         },
         zlevel: 2,
       },
@@ -196,16 +181,16 @@ function updateChart() {
         lineStyle: {
           color: '#38bdf8',
           width: 1.5,
-          opacity: 0.6,
-          curveness: 0.25,
+          opacity: 0.7,
+          curveness: 0.2,
         },
         effect: {
           show: true,
-          period: 2.5,
-          trailLength: 0.6,
+          period: 3,
+          trailLength: 0.5,
           color: '#38bdf8',
           symbol: 'circle',
-          symbolSize: 4,
+          symbolSize: 3,
         },
         zlevel: 3,
       }] : []),
@@ -222,27 +207,24 @@ function updateBarChart() {
     xAxis3D: {
       type: 'category',
       data: marketShare.map(d => d.name),
-      axisLine: { show: false },
+      axisLine: { lineStyle: { color: '#38bdf8' } },
       axisTick: { show: false },
       axisLabel: {
         color: '#e2e8f0',
         fontSize: 11,
-        margin: 8,
+        margin: 6,
       },
     },
     yAxis3D: {
       type: 'value',
       max: 40,
-      axisLine: { show: false },
+      axisLine: { lineStyle: { color: '#38bdf8' } },
       axisTick: { show: false },
-      axisLabel: {
-        color: '#94a3b8',
-        formatter: '{value}%',
-      },
+      axisLabel: { color: '#94a3b8', formatter: '{value}%' },
     },
     zAxis3D: {
       type: 'value',
-      axisLine: { show: false },
+      axisLine: { lineStyle: { color: '#38bdf8' } },
       axisTick: { show: false },
       axisLabel: { show: false },
     },
@@ -251,54 +233,39 @@ function updateBarChart() {
       trigger: 'item',
       backgroundColor: 'rgba(15, 23, 42, 0.95)',
       borderColor: '#38bdf8',
-      borderWidth: 1,
       textStyle: { color: '#fff' },
-      formatter: (params) => {
-        return `<b>${params.name}</b><br/>市场份额: <b>${params.value}%</b>`
-      },
+      formatter: (params) => `<b>${params.name}</b><br/>市场份额: <b>${params.value}%</b>`,
     },
 
     grid3D: {
-      show: true,
-      boxWidth: 55,
-      boxDepth: 45,
-      boxHeight: 55,
+      boxWidth: 50,
+      boxDepth: 40,
+      boxHeight: 50,
       viewControl: {
         projection: 'perspective',
         autoRotate: false,
-        distance: 130,
-        alpha: 38,
-        beta: 25,
+        distance: 120,
+        alpha: 35,
+        beta: 20,
         center: [0, 0, 0],
       },
       light: {
         main: {
-          intensity: 1.5,
-          shadow: true,
-          shadowQuality: 'ultra',
-          alpha: 50,
-          beta: 40,
+          intensity: 1.2,
+          shadow: false,
+          alpha: 45,
+          beta: 35,
         },
         ambient: {
-          intensity: 0.4,
-        },
-        ambientCubemap: {
-          enable: true,
-          exposure: 0.8,
-          diffuseIntensity: 0.5,
+          intensity: 0.5,
         }
       },
       material: {
-        roughness: 0.4,
-        metalness: 0.1,
+        roughness: 0.5,
+        metalness: 0.05,
       },
       axisPointer: { show: false },
-      axisLine: {
-        lineStyle: {
-          color: '#1e3a5f',
-          width: 1,
-        }
-      },
+      axisLine: { lineStyle: { color: '#1e3a5f' } },
       splitLine: { show: false },
     },
 
@@ -307,10 +274,7 @@ function updateBarChart() {
         type: 'bar3D',
         data: marketShare.map(d => ({
           value: d.value,
-          itemStyle: {
-            color: d.color,
-            opacity: 0.9,
-          },
+          itemStyle: { color: d.color, opacity: 0.9 },
         })),
         shading: 'realistic',
         barWidth: 10,
@@ -321,20 +285,17 @@ function updateBarChart() {
           position: 'top',
           formatter: (params) => `${params.name}\n${params.value}%`,
           color: '#fff',
-          fontSize: 11,
+          fontSize: 10,
           textShadowColor: '#000',
-          textShadowBlur: 3,
-          distance: 8,
+          textShadowBlur: 2,
+          distance: 5,
         },
         emphasis: {
           itemStyle: {
             opacity: 1,
-            shadowBlur: 20,
-            shadowColor: 'rgba(56, 189, 248, 0.5)',
+            shadowBlur: 15,
+            shadowColor: 'rgba(56, 189, 248, 0.4)',
           }
-        },
-        itemStyle: {
-          opacity: 0.85,
         },
         animationDurationUpdate: 1500,
       },
@@ -404,7 +365,7 @@ body {
 }
 
 .chart-section {
-  background: rgba(10, 10, 26, 0.8);
+  background: rgba(10, 10, 26, 0.9);
   border-radius: 16px;
   border: 1px solid #1e3a5f;
   overflow: hidden;
@@ -418,7 +379,7 @@ body {
 }
 
 .bar-chart-section {
-  flex: 0 0 280px;
+  flex: 0 0 260px;
 }
 
 #barChart {
