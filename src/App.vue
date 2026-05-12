@@ -219,7 +219,6 @@ function updateBarChart() {
   const option = {
     backgroundColor: 'transparent',
     
-    // 3D柱状图
     xAxis3D: {
       type: 'category',
       data: marketShare.map(d => d.name),
@@ -228,10 +227,7 @@ function updateBarChart() {
       axisLabel: {
         color: '#e2e8f0',
         fontSize: 11,
-      },
-      nameTextStyle: {
-        color: '#94a3b8',
-        fontSize: 10,
+        margin: 8,
       },
     },
     yAxis3D: {
@@ -243,14 +239,12 @@ function updateBarChart() {
         color: '#94a3b8',
         formatter: '{value}%',
       },
-      nameTextStyle: { color: '#94a3b8' },
     },
     zAxis3D: {
       type: 'value',
       axisLine: { show: false },
       axisTick: { show: false },
       axisLabel: { show: false },
-      nameTextStyle: { color: '#94a3b8' },
     },
 
     tooltip: {
@@ -266,15 +260,15 @@ function updateBarChart() {
 
     grid3D: {
       show: true,
-      boxWidth: 60,
-      boxDepth: 40,
-      boxHeight: 50,
+      boxWidth: 55,
+      boxDepth: 45,
+      boxHeight: 55,
       viewControl: {
         projection: 'perspective',
         autoRotate: false,
-        distance: 120,
-        alpha: 40,
-        beta: 20,
+        distance: 130,
+        alpha: 38,
+        beta: 25,
         center: [0, 0, 0],
       },
       light: {
@@ -298,18 +292,14 @@ function updateBarChart() {
         roughness: 0.4,
         metalness: 0.1,
       },
-      axisPointer: {
-        show: false,
-      },
+      axisPointer: { show: false },
       axisLine: {
         lineStyle: {
           color: '#1e3a5f',
           width: 1,
         }
       },
-      splitLine: {
-        show: false,
-      },
+      splitLine: { show: false },
     },
 
     series: [
@@ -329,11 +319,12 @@ function updateBarChart() {
         label: {
           show: true,
           position: 'top',
-          formatter: (params) => `${params.value}%`,
+          formatter: (params) => `${params.name}\n${params.value}%`,
           color: '#fff',
-          fontSize: 12,
+          fontSize: 11,
           textShadowColor: '#000',
           textShadowBlur: 3,
+          distance: 8,
         },
         emphasis: {
           itemStyle: {
