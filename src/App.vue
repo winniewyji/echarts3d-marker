@@ -1,8 +1,8 @@
 <template>
   <div id="app">
     <div class="header">
-      <h1>🌍 全球AI市场分布</h1>
-      <p>3D地形+国家标记+市场份额分析</p>
+      <h1>🌆 广州AI市场分布</h1>
+      <p>3D地形+区域标记+市场份额分析</p>
     </div>
 
     <div class="main-container">
@@ -30,7 +30,7 @@
 import { ref, onMounted, onUnmounted } from 'vue'
 import * as echarts from 'echarts'
 import 'echarts-gl'
-import worldJson from './world.json'
+import guangzhouJson from './guangzhou.json'
 
 const chartRef = ref(null)
 const barChartRef = ref(null)
@@ -40,35 +40,41 @@ const viewMode = ref('3d')
 const showLines = ref(true)
 const autoRotate = ref(true)
 
-// 主要国家数据（使用首都/重要城市坐标）
-const countryData = [
-  { name: '中国', value: [116.4, 39.9], flag: '🇨🇳', color: '#3b82f6' },
-  { name: '美国', value: [-77.0, 38.9], flag: '🇺🇸', color: '#10b981' },
-  { name: '日本', value: [139.7, 35.7], flag: '🇯🇵', color: '#ef4444' },
-  { name: '德国', value: [13.4, 52.5], flag: '🇩🇪', color: '#f59e0b' },
-  { name: '英国', value: [-0.1, 51.5], flag: '🇬🇧', color: '#8b5cf6' },
-  { name: '法国', value: [2.4, 48.8], flag: '🇫🇷', color: '#ec4899' },
-  { name: '韩国', value: [126.9, 37.5], flag: '🇰🇷', color: '#06b6d4' },
-  { name: '印度', value: [77.1, 28.6], flag: '🇮🇳', color: '#14b8a6' },
+// 广州各区数据
+const districtData = [
+  { name: '天河区', value: [113.361, 23.125], icon: '🏢', color: '#3b82f6' },
+  { name: '越秀区', value: [113.268, 23.129], icon: '🏛️', color: '#10b981' },
+  { name: '海珠区', value: [113.318, 23.083], icon: '🏠', color: '#ef4444' },
+  { name: '荔湾区', value: [113.244, 23.112], icon: '🏘️', color: '#f59e0b' },
+  { name: '白云区', value: [113.262, 23.168], icon: '🏔️', color: '#8b5cf6' },
+  { name: '番禺区', value: [113.364, 22.938], icon: '🏗️', color: '#ec4899' },
+  { name: '黄埔区', value: [113.457, 23.177], icon: '🏭', color: '#06b6d4' },
+  { name: '花都区', value: [113.211, 23.392], icon: '🌳', color: '#14b8a6' },
+  { name: '南沙区', value: [113.517, 22.801], icon: '🌊', color: '#22c55e' },
+  { name: '增城区', value: [113.810, 23.302], icon: '🏞️', color: '#a855f7' },
+  { name: '从化区', value: [113.587, 23.546], icon: '⛰️', color: '#84cc16' },
 ]
 
-// AI市场份额
+// 广州塔坐标
+const cantonTower = { name: '广州塔', value: [113.3238, 23.1086], icon: '🗼', color: '#fbbf24' }
+
+// 各区AI市场份额
 const marketData = [
-  { name: 'MiniMax', value: 35, color: '#38bdf8' },
-  { name: 'OpenAI', value: 28, color: '#10b981' },
-  { name: 'Google', value: 18, color: '#f472b6' },
-  { name: 'Anthropic', value: 12, color: '#fbbf24' },
-  { name: 'Others', value: 7, color: '#94a3b8' },
+  { name: '天河', value: 35, color: '#3b82f6' },
+  { name: '黄埔', value: 22, color: '#10b981' },
+  { name: '番禺', value: 15, color: '#ef4444' },
+  { name: '白云', value: 12, color: '#f59e0b' },
+  { name: '其他', value: 16, color: '#94a3b8' },
 ]
 
-// 连接线（中国连接其他国家）
-const connectLines = countryData.slice(1).map(d => ({
-  from: countryData[0].value,
+// 连接线（从广州塔连接各区）
+const connectLines = districtData.slice(0, 6).map(d => ({
+  from: cantonTower.value,
   to: d.value,
 }))
 
 function initChart() {
-  echarts.registerMap('world', worldJson)
+  echarts.registerMap('guangzhou', guangzhouJson)
   chart = echarts.init(chartRef.value)
   barChart = echarts.init(barChartRef.value)
   updateMap()
@@ -88,68 +94,68 @@ function updateMap() {
       
       // 3D地图地形效果
       geo3D: {
-        map: 'world',
+        map: 'guangzhou',
         roam: true,
-        center: [30, 20],
-        zoom: 1.5,
+        center: [113.35, 23.15],
+        zoom: 1.8,
         
         itemStyle: {
-          color: '#0f172a',
+          color: '#1e3a5f',
           opacity: 1,
           borderColor: '#38bdf8',
-          borderWidth: 0.5,
+          borderWidth: 1,
         },
         emphasis: {
           itemStyle: {
-            color: '#1e3a5f',
+            color: '#2563eb',
           },
           label: {
             show: false,
           }
         },
         
-        // 模拟地形起伏
-        regions: countryData.map(d => ({
+        // 区域着色
+        regions: districtData.map(d => ({
           name: d.name,
           itemStyle: {
             color: d.color,
-            opacity: 0.6,
+            opacity: 0.5,
             borderColor: d.color,
             borderWidth: 2,
-            shadowBlur: 15,
+            shadowBlur: 10,
             shadowColor: d.color,
           },
         })),
         
         realisticMaterial: {
           roughness: 0.3,
-          metalness: 0.8,
+          metalness: 0.7,
         },
         
         viewControl: {
           projection: 'perspective',
-          distance: 150,
+          distance: 100,
           autoRotate: autoRotate.value,
           autoRotateSpeed: 0.8,
-          alpha: 35,
-          beta: 10,
+          alpha: 40,
+          beta: 15,
           center: [0, 0, 0],
-          minDistance: 50,
-          maxDistance: 400,
+          minDistance: 30,
+          maxDistance: 250,
           animation: true,
           animationDurationUpdate: 1000,
         },
         
         light: {
           main: {
-            intensity: 2,
+            intensity: 1.8,
             shadow: false,
-            alpha: 60,
-            beta: 45,
+            alpha: 55,
+            beta: 40,
             color: '#ffffff',
           },
           ambient: {
-            intensity: 0.8,
+            intensity: 0.6,
             color: '#38bdf8',
           },
         },
@@ -158,12 +164,12 @@ function updateMap() {
           enable: true,
           bloom: {
             enable: true,
-            intensity: 0.15,
+            intensity: 0.12,
           },
           SSAO: {
             enable: true,
-            radius: 3,
-            intensity: 1.5,
+            radius: 2,
+            intensity: 1.2,
           },
         },
         
@@ -178,38 +184,69 @@ function updateMap() {
         borderColor: '#38bdf8',
         textStyle: { color: '#fff' },
         formatter: (params) => {
-          if (params.data?.flag) {
-            return `<div style="font-size:28px">${params.data.flag}</div><b>${params.data.name}</b>`
+          if (params.data?.icon) {
+            return `<div style="font-size:28px">${params.data.icon}</div><b>${params.data.name}</b>`
           }
           return params.name || ''
         }
       },
 
       series: [
-        // 3D散点（国家标记）
+        // 3D散点（广州塔）
         {
-          name: '国家',
+          name: '广州塔',
           type: 'scatter3D',
           coordinateSystem: 'geo3D',
-          data: countryData.map(d => ({
-            name: d.name,
-            value: [d.value[0], d.value[1], 3],
-            flag: d.flag,
-            itemStyle: { color: d.color },
-          })),
+          data: [{
+            name: cantonTower.name,
+            value: [cantonTower.value[0], cantonTower.value[1], 4],
+            icon: cantonTower.icon,
+          }],
           symbol: 'circle',
-          symbolSize: 1.8,
+          symbolSize: 2.5,
           label: {
             show: true,
             position: 'top',
-            formatter: (params) => params.data.flag,
-            fontSize: 18,
-            distance: 8,
+            formatter: (params) => params.data.icon,
+            fontSize: 22,
+            distance: 10,
+            textStyle: {
+              color: '#fbbf24',
+              fontSize: 22,
+            },
+          },
+          itemStyle: {
+            color: '#fbbf24',
+            shadowBlur: 30,
+            shadowColor: '#fbbf24',
+            opacity: 1,
+          },
+          emphasis: {
+            scale: 2,
+          },
+          zlevel: 3,
+        },
+        // 3D散点（各区）
+        {
+          name: '区域',
+          type: 'scatter3D',
+          coordinateSystem: 'geo3D',
+          data: districtData.map(d => ({
+            name: d.name,
+            value: [d.value[0], d.value[1], 2],
+            icon: d.icon,
+          })),
+          symbol: 'circle',
+          symbolSize: 1.5,
+          label: {
+            show: true,
+            position: 'top',
+            formatter: (params) => params.data.icon,
+            fontSize: 16,
+            distance: 6,
             textStyle: {
               color: '#fff',
-              fontSize: 18,
-              borderWidth: 2,
-              borderColor: '#000',
+              fontSize: 16,
             },
           },
           itemStyle: {
@@ -217,7 +254,7 @@ function updateMap() {
             opacity: 1,
           },
           emphasis: {
-            scale: 2.5,
+            scale: 2,
           },
           zlevel: 2,
         },
@@ -231,19 +268,19 @@ function updateMap() {
           })),
           lineStyle: {
             color: '#38bdf8',
-            width: 1.5,
-            opacity: 0.7,
-            curveness: 0.2,
+            width: 1.2,
+            opacity: 0.6,
+            curveness: 0.15,
           },
           effect: {
             show: true,
             period: 2.5,
-            trailLength: 0.5,
+            trailLength: 0.4,
             color: '#38bdf8',
             symbol: 'circle',
-            symbolSize: 3,
+            symbolSize: 2.5,
           },
-          zlevel: 3,
+          zlevel: 4,
         }] : []),
       ],
     }
@@ -252,19 +289,26 @@ function updateMap() {
     const option = {
       backgroundColor: 'transparent',
       geo: {
-        map: 'world',
+        map: 'guangzhou',
         roam: true,
+        center: [113.35, 23.15],
+        zoom: 1.8,
         itemStyle: {
           areaColor: '#1e3a5f',
           borderColor: '#38bdf8',
-          borderWidth: 0.5,
+          borderWidth: 1,
         },
         emphasis: {
           itemStyle: {
             areaColor: '#2563eb',
           },
         },
-        label: { show: false },
+        label: {
+          show: true,
+          formatter: (params) => params.name,
+          color: '#fff',
+          fontSize: 9,
+        },
       },
       tooltip: {
         trigger: 'item',
@@ -272,33 +316,59 @@ function updateMap() {
         borderColor: '#38bdf8',
         textStyle: { color: '#fff' },
         formatter: (params) => {
-          if (params.data?.flag) {
-            return `<div style="font-size:28px">${params.data.flag}</div><b>${params.data.name}</b>`
+          if (params.data?.icon) {
+            return `<div style="font-size:28px">${params.data.icon}</div><b>${params.data.name}</b>`
           }
           return params.name || ''
         }
       },
       series: [
+        // 广州塔
         {
-          name: '国家',
+          name: '广州塔',
           type: 'scatter',
           coordinateSystem: 'geo',
-          data: countryData.map(d => ({
-            name: d.name,
-            value: d.value,
-            flag: d.flag,
-            itemStyle: { color: d.color },
-          })),
+          data: [{
+            name: cantonTower.name,
+            value: cantonTower.value,
+            icon: cantonTower.icon,
+          }],
           symbol: 'circle',
-          symbolSize: 15,
+          symbolSize: 20,
           label: {
             show: true,
             position: 'top',
-            formatter: (params) => params.data.flag,
-            fontSize: 18,
+            formatter: (params) => params.data.icon,
+            fontSize: 22,
+            color: '#fbbf24',
+          },
+          itemStyle: {
+            color: '#fbbf24',
+            shadowBlur: 30,
+            shadowColor: '#fbbf24',
+          },
+          zlevel: 4,
+        },
+        // 各区
+        {
+          name: '区域',
+          type: 'scatter',
+          coordinateSystem: 'geo',
+          data: districtData.map(d => ({
+            name: d.name,
+            value: d.value,
+            icon: d.icon,
+          })),
+          symbol: 'circle',
+          symbolSize: 12,
+          label: {
+            show: true,
+            position: 'top',
+            formatter: (params) => params.data.icon,
+            fontSize: 14,
             color: '#fff',
             textShadowColor: '#000',
-            textShadowBlur: 4,
+            textShadowBlur: 3,
           },
           zlevel: 2,
         },
@@ -309,17 +379,17 @@ function updateMap() {
           data: connectLines,
           lineStyle: {
             color: '#38bdf8',
-            width: 1.5,
-            opacity: 0.7,
-            curveness: 0.2,
+            width: 1.2,
+            opacity: 0.6,
+            curveness: 0.15,
           },
           effect: {
             show: true,
             period: 2.5,
-            trailLength: 0.5,
+            trailLength: 0.4,
             color: '#38bdf8',
             symbol: 'circle',
-            symbolSize: 3,
+            symbolSize: 2.5,
           },
           zlevel: 3,
         }] : []),
