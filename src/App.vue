@@ -1,8 +1,8 @@
 <template>
   <div id="app">
     <div class="header">
-      <h1>🌆 广州AI市场分布</h1>
-      <p>3D地形+区域标记+市场份额分析</p>
+      <h1>🌏 中国AI市场分布</h1>
+      <p>3D地形+省份标记+市场份额分析</p>
     </div>
 
     <div class="main-container">
@@ -30,7 +30,7 @@
 import { ref, onMounted, onUnmounted } from 'vue'
 import * as echarts from 'echarts'
 import 'echarts-gl'
-import guangzhouJson from './guangzhou.json'
+import chinaJson from './china.json'
 
 const chartRef = ref(null)
 const barChartRef = ref(null)
@@ -40,41 +40,38 @@ const viewMode = ref('3d')
 const showLines = ref(true)
 const autoRotate = ref(true)
 
-// 广州各区数据
-const districtData = [
-  { name: '天河区', value: [113.361, 23.125], icon: '🏢', color: '#3b82f6' },
-  { name: '越秀区', value: [113.268, 23.129], icon: '🏛️', color: '#10b981' },
-  { name: '海珠区', value: [113.318, 23.083], icon: '🏠', color: '#ef4444' },
-  { name: '荔湾区', value: [113.244, 23.112], icon: '🏘️', color: '#f59e0b' },
-  { name: '白云区', value: [113.262, 23.168], icon: '🏔️', color: '#8b5cf6' },
-  { name: '番禺区', value: [113.364, 22.938], icon: '🏗️', color: '#ec4899' },
-  { name: '黄埔区', value: [113.457, 23.177], icon: '🏭', color: '#06b6d4' },
-  { name: '花都区', value: [113.211, 23.392], icon: '🌳', color: '#14b8a6' },
-  { name: '南沙区', value: [113.517, 22.801], icon: '🌊', color: '#22c55e' },
-  { name: '增城区', value: [113.810, 23.302], icon: '🏞️', color: '#a855f7' },
-  { name: '从化区', value: [113.587, 23.546], icon: '⛰️', color: '#84cc16' },
+// 中国各省份数据
+const provinceData = [
+  { name: '北京', value: [116.4, 39.9], icon: '🇨🇳', color: '#3b82f6' },
+  { name: '上海', value: [121.5, 31.2], icon: '🇨🇳', color: '#10b981' },
+  { name: '广东', value: [113.3, 23.1], icon: '🇨🇳', color: '#ef4444' },
+  { name: '浙江', value: [120.2, 30.3], icon: '🇨🇳', color: '#f59e0b' },
+  { name: '江苏', value: [118.8, 32.1], icon: '🇨🇳', color: '#8b5cf6' },
+  { name: '四川', value: [104.1, 30.7], icon: '🇨🇳', color: '#ec4899' },
+  { name: '湖北', value: [114.3, 30.6], icon: '🇨🇳', color: '#06b6d4' },
+  { name: '河南', value: [113.6, 34.8], icon: '🇨🇳', color: '#14b8a6' },
+  { name: '山东', value: [117.0, 36.7], icon: '🇨🇳', color: '#22c55e' },
+  { name: '陕西', value: [108.9, 34.3], icon: '🇨🇳', color: '#a855f7' },
+  { name: '福建', value: [119.3, 26.1], icon: '🇨🇳', color: '#84cc16' },
 ]
 
-// 广州塔坐标
-const cantonTower = { name: '广州塔', value: [113.3238, 23.1086], icon: '🗼', color: '#fbbf24' }
-
-// 各区AI市场份额
+// AI市场份额
 const marketData = [
-  { name: '天河', value: 35, color: '#3b82f6' },
-  { name: '黄埔', value: 22, color: '#10b981' },
-  { name: '番禺', value: 15, color: '#ef4444' },
-  { name: '白云', value: 12, color: '#f59e0b' },
-  { name: '其他', value: 16, color: '#94a3b8' },
+  { name: 'MiniMax', value: 35, color: '#38bdf8' },
+  { name: 'OpenAI', value: 28, color: '#10b981' },
+  { name: 'Google', value: 18, color: '#f472b6' },
+  { name: 'Anthropic', value: 12, color: '#fbbf24' },
+  { name: 'Others', value: 7, color: '#94a3b8' },
 ]
 
-// 连接线（从广州塔连接各区）
-const connectLines = districtData.slice(0, 6).map(d => ({
-  from: cantonTower.value,
+// 连接线（北京连接其他省份）
+const connectLines = provinceData.slice(1).map(d => ({
+  from: provinceData[0].value,
   to: d.value,
 }))
 
 function initChart() {
-  echarts.registerMap('guangzhou', guangzhouJson)
+  echarts.registerMap('china', chinaJson)
   chart = echarts.init(chartRef.value)
   barChart = echarts.init(barChartRef.value)
   updateMap()
@@ -92,18 +89,18 @@ function updateMap() {
     const option = {
       backgroundColor: 'transparent',
       
-      // 3D地图地形效果
+      // 3D中国地图地形效果
       geo3D: {
-        map: 'guangzhou',
+        map: 'china',
         roam: true,
-        center: [113.35, 23.15],
-        zoom: 1.8,
+        center: [105, 36],
+        zoom: 1.2,
         
         itemStyle: {
           color: '#1e3a5f',
           opacity: 1,
           borderColor: '#38bdf8',
-          borderWidth: 1,
+          borderWidth: 0.8,
         },
         emphasis: {
           itemStyle: {
@@ -114,15 +111,15 @@ function updateMap() {
           }
         },
         
-        // 区域着色
-        regions: districtData.map(d => ({
+        // 省份区域着色
+        regions: provinceData.map(d => ({
           name: d.name,
           itemStyle: {
             color: d.color,
             opacity: 0.5,
             borderColor: d.color,
-            borderWidth: 2,
-            shadowBlur: 10,
+            borderWidth: 1.5,
+            shadowBlur: 8,
             shadowColor: d.color,
           },
         })),
@@ -134,14 +131,14 @@ function updateMap() {
         
         viewControl: {
           projection: 'perspective',
-          distance: 100,
+          distance: 150,
           autoRotate: autoRotate.value,
-          autoRotateSpeed: 0.8,
-          alpha: 40,
-          beta: 15,
+          autoRotateSpeed: 0.6,
+          alpha: 35,
+          beta: 10,
           center: [0, 0, 0],
-          minDistance: 30,
-          maxDistance: 250,
+          minDistance: 50,
+          maxDistance: 400,
           animation: true,
           animationDurationUpdate: 1000,
         },
@@ -192,61 +189,27 @@ function updateMap() {
       },
 
       series: [
-        // 3D散点（广州塔）
+        // 3D散点（省份标记）
         {
-          name: '广州塔',
+          name: '省份',
           type: 'scatter3D',
           coordinateSystem: 'geo3D',
-          data: [{
-            name: cantonTower.name,
-            value: [cantonTower.value[0], cantonTower.value[1], 4],
-            icon: cantonTower.icon,
-          }],
-          symbol: 'circle',
-          symbolSize: 2.5,
-          label: {
-            show: true,
-            position: 'top',
-            formatter: (params) => params.data.icon,
-            fontSize: 22,
-            distance: 10,
-            textStyle: {
-              color: '#fbbf24',
-              fontSize: 22,
-            },
-          },
-          itemStyle: {
-            color: '#fbbf24',
-            shadowBlur: 30,
-            shadowColor: '#fbbf24',
-            opacity: 1,
-          },
-          emphasis: {
-            scale: 2,
-          },
-          zlevel: 3,
-        },
-        // 3D散点（各区）
-        {
-          name: '区域',
-          type: 'scatter3D',
-          coordinateSystem: 'geo3D',
-          data: districtData.map(d => ({
+          data: provinceData.map(d => ({
             name: d.name,
             value: [d.value[0], d.value[1], 2],
             icon: d.icon,
           })),
           symbol: 'circle',
-          symbolSize: 1.5,
+          symbolSize: 1.8,
           label: {
             show: true,
             position: 'top',
             formatter: (params) => params.data.icon,
-            fontSize: 16,
-            distance: 6,
+            fontSize: 18,
+            distance: 8,
             textStyle: {
               color: '#fff',
-              fontSize: 16,
+              fontSize: 18,
             },
           },
           itemStyle: {
@@ -254,7 +217,7 @@ function updateMap() {
             opacity: 1,
           },
           emphasis: {
-            scale: 2,
+            scale: 2.5,
           },
           zlevel: 2,
         },
@@ -280,7 +243,7 @@ function updateMap() {
             symbol: 'circle',
             symbolSize: 2.5,
           },
-          zlevel: 4,
+          zlevel: 3,
         }] : []),
       ],
     }
@@ -289,26 +252,19 @@ function updateMap() {
     const option = {
       backgroundColor: 'transparent',
       geo: {
-        map: 'guangzhou',
+        map: 'china',
         roam: true,
-        center: [113.35, 23.15],
-        zoom: 1.8,
         itemStyle: {
           areaColor: '#1e3a5f',
           borderColor: '#38bdf8',
-          borderWidth: 1,
+          borderWidth: 0.5,
         },
         emphasis: {
           itemStyle: {
             areaColor: '#2563eb',
           },
         },
-        label: {
-          show: true,
-          formatter: (params) => params.name,
-          color: '#fff',
-          fontSize: 9,
-        },
+        label: { show: false },
       },
       tooltip: {
         trigger: 'item',
@@ -323,52 +279,25 @@ function updateMap() {
         }
       },
       series: [
-        // 广州塔
         {
-          name: '广州塔',
+          name: '省份',
           type: 'scatter',
           coordinateSystem: 'geo',
-          data: [{
-            name: cantonTower.name,
-            value: cantonTower.value,
-            icon: cantonTower.icon,
-          }],
-          symbol: 'circle',
-          symbolSize: 20,
-          label: {
-            show: true,
-            position: 'top',
-            formatter: (params) => params.data.icon,
-            fontSize: 22,
-            color: '#fbbf24',
-          },
-          itemStyle: {
-            color: '#fbbf24',
-            shadowBlur: 30,
-            shadowColor: '#fbbf24',
-          },
-          zlevel: 4,
-        },
-        // 各区
-        {
-          name: '区域',
-          type: 'scatter',
-          coordinateSystem: 'geo',
-          data: districtData.map(d => ({
+          data: provinceData.map(d => ({
             name: d.name,
             value: d.value,
             icon: d.icon,
           })),
           symbol: 'circle',
-          symbolSize: 12,
+          symbolSize: 15,
           label: {
             show: true,
             position: 'top',
             formatter: (params) => params.data.icon,
-            fontSize: 14,
+            fontSize: 18,
             color: '#fff',
             textShadowColor: '#000',
-            textShadowBlur: 3,
+            textShadowBlur: 4,
           },
           zlevel: 2,
         },
