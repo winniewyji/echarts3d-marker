@@ -1,8 +1,8 @@
 <template>
   <div id="app">
     <div class="header">
-      <h1>🌍 全球AI模型市场份额分布</h1>
-      <p>3D地球可视化 · 主要国家AI布局</p>
+      <h1>🗺️ 广州AI市场分布</h1>
+      <p>3D可视化 · 广州市各区AI布局</p>
     </div>
 
     <div class="main-container">
@@ -17,7 +17,7 @@
     <div class="controls">
       <button class="btn" :class="{ active: viewMode === '3d' }" @click="setViewMode('3d')">🌍 3D 视角</button>
       <button class="btn" :class="{ active: viewMode === '2d' }" @click="setViewMode('2d')">🗺️ 2D 视角</button>
-      <button class="btn" :class="{ active: showLines }" @click="showLines = !showLines; updateChart()">✈️ {{ showLines ? '隐藏航线' : '显示航线' }}</button>
+      <button class="btn" :class="{ active: showLines }" @click="showLines = !showLines; updateChart()">✈️ {{ showLines ? '隐藏连接' : '显示连接' }}</button>
       <button class="btn" :class="{ active: autoRotate }" @click="autoRotate = !autoRotate; updateChart()">🔄 {{ autoRotate ? '停止旋转' : '自动旋转' }}</button>
     </div>
   </div>
@@ -27,7 +27,7 @@
 import { ref, onMounted, onUnmounted } from 'vue'
 import * as echarts from 'echarts'
 import 'echarts-gl'
-import worldJson from './world.json'
+import guangzhouJson from './guangzhou.json'
 
 const chartRef = ref(null)
 const barChartRef = ref(null)
@@ -37,36 +37,38 @@ const viewMode = ref('3d')
 const showLines = ref(true)
 const autoRotate = ref(true)
 
-const flagData = [
-  { name: '中国', value: [104.0, 35.0], flag: '🇨🇳', rank: 1 },
-  { name: '美国', value: [-98.5, 39.8], flag: '🇺🇸', rank: 2 },
-  { name: '俄罗斯', value: [55.0, 62.0], flag: '🇷🇺', rank: 3 },
-  { name: '日本', value: [138.0, 36.0], flag: '🇯🇵', rank: 4 },
-  { name: '韩国', value: [127.0, 37.0], flag: '🇰🇷', rank: 5 },
-  { name: '英国', value: [-1.0, 52.0], flag: '🇬🇧', rank: 6 },
-  { name: '法国', value: [2.0, 47.0], flag: '🇫🇷', rank: 7 },
-  { name: '德国', value: [10.0, 51.0], flag: '🇩🇪', rank: 8 },
+// 广州各区数据（使用区中心坐标）
+const districtData = [
+  { name: '天河区', value: [113.361, 23.125], flag: '🏢', rank: 1 },
+  { name: '黄埔区', value: [113.457, 23.177], flag: '🏭', rank: 2 },
+  { name: '番禺区', value: [113.364, 22.938], flag: '🏗️', rank: 3 },
+  { name: '白云区', value: [113.262, 23.168], flag: '🏢', rank: 4 },
+  { name: '海珠区', value: [113.318, 23.083], flag: '🏠', rank: 5 },
+  { name: '越秀区', value: [113.268, 23.129], flag: '🏛️', rank: 6 },
+  { name: '荔湾区', value: [113.244, 23.112], flag: '🏘️', rank: 7 },
+  { name: '花都区', value: [113.211, 23.392], flag: '🌳', rank: 8 },
+  { name: '南沙区', value: [113.517, 22.801], flag: '🌊', rank: 9 },
+  { name: '增城区', value: [113.810, 23.302], flag: '🏔️', rank: 10 },
+  { name: '从化区', value: [113.587, 23.546], flag: '⛰️', rank: 11 },
 ]
 
+// 示例：各区AI企业数量
 const marketShare = [
-  { name: 'MiniMax', value: 34.2, color: '#38bdf8' },
-  { name: 'OpenAI', value: 27.8, color: '#10b981' },
-  { name: 'Google', value: 18.5, color: '#f472b6' },
-  { name: 'Others', value: 19.5, color: '#94a3b8' },
+  { name: '天河', value: 35, color: '#38bdf8' },
+  { name: '黄埔', value: 25, color: '#10b981' },
+  { name: '番禺', value: 15, color: '#f472b6' },
+  { name: '白云', value: 10, color: '#fbbf24' },
+  { name: '其他', value: 15, color: '#94a3b8' },
 ]
 
-const connectLines = [
-  { from: [104.0, 35.0], to: [-98.5, 39.8] },
-  { from: [104.0, 35.0], to: [55.0, 62.0] },
-  { from: [104.0, 35.0], to: [138.0, 36.0] },
-  { from: [104.0, 35.0], to: [127.0, 37.0] },
-  { from: [104.0, 35.0], to: [-1.0, 52.0] },
-  { from: [104.0, 35.0], to: [2.0, 47.0] },
-  { from: [104.0, 35.0], to: [10.0, 51.0] },
-]
+// 连接线（从天河区连接其他区）
+const connectLines = districtData.slice(1).map(d => ({
+  from: districtData[0].value,
+  to: d.value,
+}))
 
 function initChart() {
-  echarts.registerMap('world', worldJson)
+  echarts.registerMap('guangzhou', guangzhouJson)
   chart = echarts.init(chartRef.value)
   barChart = echarts.init(barChartRef.value)
   updateChart()
@@ -81,20 +83,17 @@ function updateChart() {
   const is3D = viewMode.value === '3d'
 
   if (is3D) {
-    // ========== 真正的 3D 地球模式 ==========
     const option = {
       backgroundColor: '#0a0a1a',
-      
-      // 真正的 3D 地球组件
       geo3D: {
-        map: 'world',
+        map: 'guangzhou',
         roam: true,
-        center: [0, 0],
+        center: [113.35, 23.15],
         itemStyle: {
           color: '#1a365d',
           opacity: 1,
           borderColor: '#4299e1',
-          borderWidth: 0.5,
+          borderWidth: 0.8,
         },
         emphasis: {
           itemStyle: {
@@ -102,20 +101,25 @@ function updateChart() {
           }
         },
         label: {
-          show: false,
+          show: true,
+          formatter: (params) => params.name,
+          color: '#fff',
+          fontSize: 10,
+          textShadowColor: '#000',
+          textShadowBlur: 2,
         },
         realisticMaterial: {
           roughness: 0.6,
           metalness: 0.1,
         },
         viewControl: {
-          distance: 120,
+          distance: 80,
           autoRotate: autoRotate.value,
-          autoRotateSpeed: 0.8,
-          alpha: 40,
-          beta: 10,
-          minDistance: 50,
-          maxDistance: 250,
+          autoRotateSpeed: 0.5,
+          alpha: 50,
+          beta: 15,
+          minDistance: 30,
+          maxDistance: 200,
           animation: true,
           animationDurationUpdate: 1000,
         },
@@ -129,9 +133,6 @@ function updateChart() {
           ambient: {
             intensity: 0.4,
           },
-          ambientCubemap: {
-            enable: false,
-          }
         },
         postEffect: {
           enable: true,
@@ -139,14 +140,6 @@ function updateChart() {
             enable: true,
             intensity: 0.05,
           },
-          SSAO: {
-            enable: true,
-            radius: 1,
-            intensity: 0.5,
-          },
-        },
-        temporalSuperSampling: {
-          enable: false,
         },
       },
 
@@ -157,36 +150,33 @@ function updateChart() {
         textStyle: { color: '#fff' },
         formatter: (params) => {
           if (params.data?.flag) {
-            return `<div style="font-size:24px">${params.data.flag}</div><b>${params.data.name}</b><br/>AI市场份额第${params.data.rank}位`
+            return `<div style="font-size:20px">${params.data.flag}</div><b>${params.data.name}</b><br/>AI企业数量排名第${params.data.rank}位`
           }
-          return params.name || ''
+          return params.name
         }
       },
 
       series: [
-        // 3D 散点（国旗）
         {
-          name: '国旗',
+          name: '区域标记',
           type: 'scatter3D',
           coordinateSystem: 'geo3D',
-          data: flagData.map(d => ({
+          data: districtData.map(d => ({
             name: d.name,
-            value: [d.value[0], d.value[1], 2],
+            value: [d.value[0], d.value[1], 1],
             flag: d.flag,
             rank: d.rank,
           })),
           symbol: 'circle',
-          symbolSize: 1.5,
+          symbolSize: 1.2,
           label: {
             show: true,
             position: 'top',
             formatter: (params) => params.data.flag,
-            fontSize: 16,
+            fontSize: 14,
             distance: 5,
             textStyle: {
               color: '#fff',
-              fontSize: 16,
-              backgroundColor: 'transparent',
             },
           },
           itemStyle: {
@@ -198,9 +188,8 @@ function updateChart() {
           },
           zlevel: 2,
         },
-        // 3D 飞线
         ...(showLines.value ? [{
-          name: '航线',
+          name: '连接线',
           type: 'lines3D',
           coordinateSystem: 'geo3D',
           data: connectLines.map(line => ({
@@ -208,17 +197,17 @@ function updateChart() {
           })),
           lineStyle: {
             color: '#38bdf8',
-            width: 1.5,
-            opacity: 0.7,
-            curveness: 0.2,
+            width: 1,
+            opacity: 0.6,
+            curveness: 0.15,
           },
           effect: {
             show: true,
-            period: 3,
-            trailLength: 0.5,
+            period: 2,
+            trailLength: 0.4,
             color: '#38bdf8',
             symbol: 'circle',
-            symbolSize: 3,
+            symbolSize: 2,
           },
           zlevel: 3,
         }] : []),
@@ -226,17 +215,17 @@ function updateChart() {
     }
     chart.setOption(option, true)
   } else {
-    // ========== 2D 地图模式 ==========
     const option = {
       backgroundColor: '#0a0a1a',
       geo: {
-        map: 'world',
+        map: 'guangzhou',
         roam: true,
-        scaleLimit: { min: 0.8, max: 8 },
+        center: [113.35, 23.15],
+        scale: 1.5,
         itemStyle: {
           areaColor: '#1a365d',
           borderColor: '#4299e1',
-          borderWidth: 0.5,
+          borderWidth: 0.8,
         },
         emphasis: {
           itemStyle: {
@@ -244,7 +233,11 @@ function updateChart() {
             borderColor: '#63b3ed',
           }
         },
-        label: { show: false },
+        label: {
+          show: true,
+          color: '#fff',
+          fontSize: 10,
+        },
       },
       tooltip: {
         trigger: 'item',
@@ -253,32 +246,32 @@ function updateChart() {
         textStyle: { color: '#fff' },
         formatter: (params) => {
           if (params.data?.flag) {
-            return `<div style="font-size:24px">${params.data.flag}</div><b>${params.data.name}</b>`
+            return `<div style="font-size:20px">${params.data.flag}</div><b>${params.data.name}</b>`
           }
-          return params.name || ''
+          return params.name
         }
       },
       series: [
         {
-          name: '国旗',
+          name: '区域标记',
           type: 'scatter',
           coordinateSystem: 'geo',
-          data: flagData.map(d => ({
+          data: districtData.map(d => ({
             name: d.name,
             value: d.value,
             flag: d.flag,
             rank: d.rank,
           })),
           symbol: 'circle',
-          symbolSize: 14,
+          symbolSize: 12,
           label: {
             show: true,
             position: 'top',
             formatter: (params) => params.data.flag,
-            fontSize: 18,
+            fontSize: 14,
             color: '#fff',
             textShadowColor: '#000',
-            textShadowBlur: 4,
+            textShadowBlur: 3,
           },
           itemStyle: {
             color: 'rgba(251, 191, 36, 0.8)',
@@ -286,23 +279,23 @@ function updateChart() {
           zlevel: 2,
         },
         ...(showLines.value ? [{
-          name: '航线',
+          name: '连接线',
           type: 'lines',
           coordinateSystem: 'geo',
           data: connectLines,
           lineStyle: {
             color: '#38bdf8',
-            width: 1.5,
-            opacity: 0.7,
-            curveness: 0.2,
+            width: 1,
+            opacity: 0.6,
+            curveness: 0.15,
           },
           effect: {
             show: true,
-            period: 3,
-            trailLength: 0.5,
+            period: 2,
+            trailLength: 0.4,
             color: '#38bdf8',
             symbol: 'circle',
-            symbolSize: 3,
+            symbolSize: 2,
           },
           zlevel: 3,
         }] : []),
@@ -344,7 +337,7 @@ function updateBarChart() {
       backgroundColor: 'rgba(15, 23, 42, 0.95)',
       borderColor: '#38bdf8',
       textStyle: { color: '#fff' },
-      formatter: (params) => `<b>${params.name}</b><br/>市场份额: <b>${params.value}%</b>`,
+      formatter: (params) => `<b>${params.name}</b><br/>AI企业占比: <b>${params.value}%</b>`,
     },
     grid3D: {
       boxWidth: 50,
